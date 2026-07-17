@@ -111,6 +111,8 @@
   /* 提出ボタンは「メニューに入れる」と役割が違うので色を分ける */
   #submitBtn{background:var(--steel);margin-top:12px;}
   #submitCard .fld{margin-top:10px;}
+  .sbst{margin:10px 0 0;font-size:.9rem;font-weight:700;text-align:center;min-height:1.4em;}
+  .sbst.ok{color:var(--green);} .sbst.ng{color:var(--hard);} .sbst.wait{color:var(--muted);}
 
   .menu-head{display:flex;align-items:center;justify-content:space-between;margin:30px 0 12px;gap:8px;flex-wrap:wrap;}
   .menu-head h2{margin:0;font-size:1.3rem;font-weight:900;}
@@ -284,6 +286,7 @@
     <label class="fld">なまえ</label>
     <input type="text" id="stuName" placeholder="れい：やまだ たろう">
     <button class="add-btn" id="submitBtn">📤 先生に提出する</button>
+    <p class="sbst" id="subStat"></p>
   </div>
 
   <div class="foot">
@@ -754,17 +757,56 @@ function submitText(){
   if((rec.note||"").trim()) L.push("", "ふりかえり：", rec.note.trim());
   return L.join("\n");
 }
+/* ===== Supabase へ記録を残す =====
+   anonキーはここに書くが、submissions は INSERT しか許可していないので
+   このキーで他の生徒の記録を読むことはできない（RLS）。secretキーは絶対に置かない */
+const SB_URL="https://hortngwcijhjagwmcoxo.supabase.co";
+const SB_KEY="sb_publishable_qy1V664U_HDLq_YEXkwo7w_fF6GpRBI";
+const stat=document.getElementById("subStat");
+function setStat(msg,cls){ stat.textContent=msg; stat.className="sbst"+(cls?" "+cls:""); }
+
+function payloadNow(){
+  const rec=today();
+  return { day:TODAY, name:nameEl.value.trim(), sport:(SPORTS[current]||{}).name||null,
+    menu:rec.menu, note:(rec.note||"").trim()||null,
+    total_min:rec.menu.reduce((s,it)=>s+(it.mins>0?it.mins:0),0), item_count:rec.menu.length };
+}
+async function postOne(p){
+  const r=await fetch(SB_URL+"/rest/v1/submissions",{ method:"POST",
+    headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,
+      "Content-Type":"application/json",Prefer:"return=minimal"},
+    body:JSON.stringify(p) });
+  if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,120));
+}
+// 送れなかったぶんは端末にためて、次に開いたときや次の提出のときに送り直す
+const pend=()=>{ try{ return JSON.parse(localStorage.getItem("pmb3_pending")||"[]"); }catch(e){ return []; } };
+const setPend=a=>{ try{ localStorage.setItem("pmb3_pending",JSON.stringify(a.slice(-30))); }catch(e){} };
+async function flushPending(){
+  const q=pend(); if(!q.length) return;
+  const rest=[];
+  for(const p of q){ try{ await postOne(p); }catch(e){ rest.push(p); } }
+  setPend(rest);
+  if(q.length&&!rest.length) setStat("たまっていた "+q.length+" 件を先生に送りました","ok");
+}
+
 document.getElementById("submitBtn").onclick=async()=>{
   if(!today().menu.length){ alert("メニューが空です。練習を入れてから提出してください。"); return; }
   if(!nameEl.value.trim()){ alert("なまえを入れてください。"); nameEl.focus(); return; }
   const txt=submitText(), fn=TODAY+"_"+nameEl.value.trim()+"_れんしゅうメニュー.txt";
   const file=new File([txt],fn,{type:"text/plain"});
+  // 送信は await しない。await すると共有シートがユーザー操作と切りはなされ、
+  // iOS Safari が navigator.share() を拒否するため
+  setStat("先生に送っています…","wait");
+  const sending=postOne(payloadNow()).then(()=>{ setStat("✓ 先生に記録しました","ok"); flushPending(); })
+    .catch(e=>{ const q=pend(); q.push(payloadNow()); setPend(q);
+      setStat("いまは送れませんでした。あとで自動でやり直します","ng"); console.warn(e); });
   try{
-    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
-    if(navigator.share){ await navigator.share({title:fn,text:txt}); return; }
-  }catch(e){ return; }   // AbortError＝生徒が共有シートを閉じただけ。何もしない
-  const url=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
-  const a=document.createElement("a"); a.href=url; a.download=fn; a.click(); URL.revokeObjectURL(url);
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); }
+    else if(navigator.share){ await navigator.share({title:fn,text:txt}); }
+    else{ const url=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
+      const a=document.createElement("a"); a.href=url; a.download=fn; a.click(); URL.revokeObjectURL(url); }
+  }catch(e){}   // AbortError＝生徒が共有シートを閉じただけ。記録の送信は続く
+  await sending;
 };
 
 /* ===== 全消去（今日のみ） ===== */
@@ -798,6 +840,9 @@ noteEl.value=today().note||"";
 try{ nameEl.value=localStorage.getItem("pmb3_name")||""; }catch(e){}
 nameEl.addEventListener("input",()=>{ try{ localStorage.setItem("pmb3_name",nameEl.value); }catch(e){} });
 render();
+// 前回送れなかったぶんがあれば、開いたときに送り直す
+flushPending();
+window.addEventListener("online",flushPending);
 </script>
 </body>
 </html>
