@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>れんしゅうメニュー ビルダー｜球技</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#F26722; --orange-deep:#D24E14;
+    --navy:#16233F; --steel:#5B6B7B; --green:#1F9D6B;
+    --paper:#F5F6F8; --card:#FFFFFF; --line:#DFE3E8;
+    --ink:#1B2434; --muted:#6B7688; --hard:#C0392B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{font-family:"Zen Kaku Gothic New",system-ui,sans-serif;background:var(--paper);
+    color:var(--ink);line-height:1.7;font-size:17px;}
+  h1,h2,h3{font-family:"Zen Maru Gothic",system-ui,sans-serif;}
+
+  header{background:var(--navy);color:#fff;padding:18px 20px 20px;position:relative;overflow:hidden;}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));}
+  header h1{margin:0;font-size:1.5rem;font-weight:900;letter-spacing:.02em;}
+  header p{margin:6px 0 0;font-size:.95rem;color:#B9C3D6;}
+  header .meta{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+  header .pill{display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.12);border-radius:999px;padding:5px 14px;font-weight:700;font-size:.95rem;}
+
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 140px;}
+
+  .sport-sec h2{font-size:1.1rem;font-weight:900;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
+  .sport-sec h2 .badge{background:var(--steel);color:#fff;font-family:"Zen Maru Gothic";font-weight:900;
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:1rem;}
+  .sport-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:14px 0 26px;}
+  .sport{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 8px;
+    text-align:center;cursor:pointer;transition:.12s;font-family:inherit;}
+  .sport:hover{border-color:var(--steel);}
+  .sport.sel{border-color:var(--orange);background:#FFF4EE;}
+  .sport .ico{font-size:1.9rem;display:block;line-height:1.2;}
+  .sport .nm{font-weight:700;font-size:.9rem;margin-top:4px;display:block;}
+
+  .steps-map{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 24px;}
+  .steps-map .m{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center;}
+  .steps-map .m .no{font-family:"Zen Maru Gothic";font-weight:900;font-size:1.1rem;color:var(--steel);display:block;}
+  .steps-map .m .nm{font-size:.8rem;color:var(--muted);margin-top:2px;font-weight:700;}
+  .steps-map .m.done{border-color:var(--green);background:#EAF7F1;}
+  .steps-map .m.done .no{color:var(--green);}
+  .steps-map .m.done .no::before{content:"✓ ";}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:18px;}
+  .card h2{margin:0 0 4px;font-size:1.15rem;font-weight:900;display:flex;align-items:center;gap:10px;}
+  .card h2 .badge{background:var(--orange);color:#fff;font-family:"Zen Maru Gothic";font-weight:900;
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:1.05rem;flex:0 0 auto;}
+  .hint{font-size:.9rem;color:var(--muted);margin:0 0 14px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;
+    font-size:.98rem;font-weight:700;color:var(--ink);cursor:pointer;transition:.12s;font-family:inherit;}
+  .chip:hover{border-color:var(--steel);}
+  .chip.sel{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .chip.multi.sel{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .chips:empty::after{content:"（この競技は自由入力で作ります）";color:var(--muted);font-size:.9rem;}
+
+  .chip-group{width:100%;font-size:.82rem;font-weight:900;color:var(--steel);margin:8px 0 0;font-family:"Zen Maru Gothic";}
+  .chip-group:first-child{margin-top:0;}
+  label.fld{display:block;font-weight:700;font-size:.95rem;margin:4px 0 6px;}
+  input[type=text],textarea{width:100%;border:2px solid var(--line);border-radius:12px;padding:12px 14px;
+    font-size:1rem;font-family:inherit;color:var(--ink);background:#fff;}
+  input:focus,textarea:focus{outline:none;border-color:var(--orange);}
+  textarea{resize:vertical;min-height:70px;}
+
+  .nums{display:flex;gap:10px;flex-wrap:wrap;}
+  .nums .n{flex:1;min-width:130px;}
+  .stepper{display:flex;align-items:stretch;border:2px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stepper button{width:52px;border:none;background:var(--paper);font-size:1.5rem;font-weight:700;
+    color:var(--navy);cursor:pointer;font-family:inherit;}
+  .stepper button:active{background:var(--line);}
+  .stepper input{border:none;border-radius:0;text-align:center;font-weight:700;font-size:1.15rem;-moz-appearance:textfield;width:100%;}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .unit{text-align:center;font-size:.8rem;color:var(--muted);margin-top:4px;font-weight:700;}
+
+  .add-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:14px;padding:16px;
+    font-size:1.15rem;font-weight:900;font-family:"Zen Maru Gothic";cursor:pointer;margin-top:4px;}
+  .add-btn:active{transform:translateY(1px);}
+
+  .menu-head{display:flex;align-items:center;justify-content:space-between;margin:30px 0 12px;gap:8px;flex-wrap:wrap;}
+  .menu-head h2{margin:0;font-size:1.3rem;font-weight:900;}
+  .menu-head .stats{display:flex;gap:8px;}
+  .menu-count,.menu-time{background:var(--navy);color:#fff;border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:700;}
+  .menu-time{background:var(--orange-deep);}
+  .empty{text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:16px;padding:36px 20px;font-size:.95rem;}
+
+  .item{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--orange);
+    border-radius:14px;padding:16px 16px 14px;margin-bottom:12px;}
+  .item.st-good{border-left-color:var(--green);background:#F7FCFA;}
+  .item.st-hard{border-left-color:var(--hard);background:#FDF6F5;}
+  .item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .item .seq{font-family:"Zen Maru Gothic";font-weight:900;font-size:1.2rem;color:var(--orange-deep);flex:0 0 auto;}
+  .item .content{font-weight:700;font-size:1.1rem;}
+  .item .sportlbl{font-size:.78rem;color:var(--muted);font-weight:700;margin-left:auto;flex:0 0 auto;}
+  .item dl{margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.95rem;}
+  .item dt{color:var(--muted);font-weight:700;white-space:nowrap;}
+  .item dd{margin:0;}
+  .item .tag{display:inline-block;background:#EAF7F1;color:var(--green);border-radius:8px;padding:2px 9px;
+    font-size:.85rem;font-weight:700;margin:2px 4px 2px 0;}
+  .item .ctrl{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+  .item .ctrl button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;
+    font-size:.9rem;font-weight:700;cursor:pointer;color:var(--ink);font-family:inherit;}
+  .item .ctrl button:hover{border-color:var(--steel);}
+  .item .ctrl .del{color:var(--hard);border-color:#F3D3CE;}
+  .item .ctrl .good{color:var(--green);border-color:#BEE3D2;}
+  .item .ctrl .good.on{background:var(--green);color:#fff;border-color:var(--green);}
+  .item .ctrl .hard{color:var(--hard);border-color:#F3D3CE;}
+  .item .ctrl .hard.on{background:var(--hard);color:#fff;border-color:var(--hard);}
+  .item .ctrl .tmr{color:var(--navy);border-color:#C4CEDD;}
+  .stmark{font-size:.85rem;font-weight:900;margin-left:4px;}
+  .stmark.g{color:var(--green);} .stmark.h{color:var(--hard);}
+
+  .foot{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .foot button{flex:1;min-width:140px;border:none;border-radius:14px;padding:15px;
+    font-size:1.05rem;font-weight:900;font-family:"Zen Maru Gothic";cursor:pointer;}
+  .btn-print{background:var(--navy);color:#fff;}
+  .btn-clear{background:#fff;color:var(--hard);border:2px solid #F3D3CE!important;}
+
+  /* 過去のメニュー */
+  .past-sec{margin-top:34px;}
+  .past-sec h2{font-size:1.2rem;font-weight:900;margin:0 0 10px;}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+  .day .dhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .day .dt{font-family:"Zen Maru Gothic";font-weight:900;font-size:1.05rem;color:var(--navy);}
+  .day .dc{font-size:.85rem;color:var(--muted);font-weight:700;}
+  .day .dbtns{margin-left:auto;display:flex;gap:6px;}
+  .day .dbtns button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;
+    font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);}
+  .day .dbtns .del{color:var(--hard);border-color:#F3D3CE;}
+  .day .dbody{display:none;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;font-size:.92rem;}
+  .day.open .dbody{display:block;}
+  .day .dbody .pi{margin:4px 0;}
+  .day .dbody .note{color:var(--muted);margin-top:6px;}
+
+  /* タイマーバー */
+  #timerBar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;
+    display:none;align-items:center;gap:14px;padding:12px 18px;z-index:50;
+    box-shadow:0 -4px 16px rgba(22,35,63,.25);}
+  #timerBar.on{display:flex;}
+  #timerBar .tname{font-weight:700;font-size:.95rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #timerBar .tleft{font-family:"Zen Maru Gothic";font-weight:900;font-size:1.7rem;letter-spacing:.04em;}
+  #timerBar.fin .tleft{color:#FFC49E;}
+  #timerBar button{border:none;border-radius:10px;padding:9px 16px;font-weight:900;font-family:"Zen Maru Gothic";
+    cursor:pointer;font-size:.95rem;background:var(--orange);color:#fff;}
+
+  @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    header::after,.sport-sec,.steps-map,.builder,.foot,.item .ctrl,.menu-count,.menu-time,
+    .past-sec,#timerBar,#noteCard .hint{display:none!important;}
+    body{background:#fff;font-size:12pt;}
+    header{background:#fff;color:#000;border-bottom:2px solid #000;padding:0 0 8px;}
+    header p,header .pill{color:#333;background:none;padding:0;}
+    .wrap{padding:10px;max-width:100%;}
+    .item{break-inside:avoid;border:1px solid #999;border-left:4px solid #000;background:#fff;}
+    .menu-head h2{font-size:14pt;}
+    #noteCard{border:1px solid #999;}
+  }
+  @media (max-width:480px){ .steps-map .m .nm{font-size:.72rem;} body{font-size:16px;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>れんしゅうメニュー ビルダー</h1>
+  <p>球技　じぶんで組み立てる練習計画</p>
+  <div class="meta">
+    <span class="pill" id="todayLbl">📅</span>
+    <span class="pill" id="curSport">🏀</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="sport-sec">
+    <h2><span class="badge">競</span>まず「きょうぎ」をえらぶ</h2>
+    <div class="sport-grid" id="sportGrid"></div>
+  </div>
+
+  <div class="steps-map">
+    <div class="m"><span class="no">1</span><span class="nm">もくてき</span></div>
+    <div class="m"><span class="no">2</span><span class="nm">ないよう</span></div>
+    <div class="m"><span class="no">3</span><span class="nm">回数・セット</span></div>
+    <div class="m"><span class="no">4</span><span class="nm">気をつける</span></div>
+  </div>
+
+  <div class="builder">
+    <div class="card">
+      <h2><span class="badge">1</span>この練習の「もくてき」</h2>
+      <p class="hint">まず「何のためにやるか」を決めます。目的が決まると、合う練習が選びやすくなります。</p>
+      <div class="chips" id="chipsGoal"></div>
+      <label class="fld">じぶんで書く（えらんでもOK）</label>
+      <input type="text" id="goalText" placeholder="れい：ゲームで使えるパスを身につける">
+    </div>
+
+    <div class="card">
+      <h2><span class="badge">2</span>れんしゅうの「ないよう」</h2>
+      <p class="hint">目的にあった練習をえらびます。1つの項目には1つの練習を入れると分かりやすいです。</p>
+      <div class="chips" id="chipsDrill"></div>
+      <label class="fld">じぶんで書く（えらんでもOK）</label>
+      <input type="text" id="drillText" placeholder="れい：対面でチェストパス">
+    </div>
+
+    <div class="card">
+      <h2><span class="badge">3</span>「回数・セット・時間」</h2>
+      <p class="hint">どれくらいやるかを数字で決めます。「分」を入れるとタイマーが使え、合計時間にも足されます。</p>
+      <div class="nums">
+        <div class="n"><div class="stepper"><button type="button" data-t="reps" data-d="-1">−</button><input type="number" id="reps" value="10" min="0"><button type="button" data-t="reps" data-d="1">＋</button></div><div class="unit">回</div></div>
+        <div class="n"><div class="stepper"><button type="button" data-t="sets" data-d="-1">−</button><input type="number" id="sets" value="3" min="0"><button type="button" data-t="sets" data-d="1">＋</button></div><div class="unit">セット</div></div>
+        <div class="n"><div class="stepper"><button type="button" data-t="mins" data-d="-1">−</button><input type="number" id="mins" value="0" min="0"><button type="button" data-t="mins" data-d="1">＋</button></div><div class="unit">分（時間で行う練習）</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="badge">4</span>「気をつけること」</h2>
+      <p class="hint">安全やルールで注意する点をえらびます（いくつでも）。自分で書き足せます。</p>
+      <div class="chips" id="chipsCare"></div>
+      <label class="fld">じぶんで書き足す</label>
+      <input type="text" id="careText" placeholder="れい：パスのとき相手をよく見る">
+    </div>
+
+    <button class="add-btn" id="addBtn">＋ この練習をメニューに入れる</button>
+  </div>
+
+  <div class="menu-head">
+    <h2>今日のメニュー</h2>
+    <div class="stats">
+      <span class="menu-time" id="menuTime">合計 0 分</span>
+      <span class="menu-count" id="menuCount">0 こ</span>
+    </div>
+  </div>
+  <div id="menuList"></div>
+
+  <div class="card" id="noteCard" style="margin-top:18px;">
+    <h2><span class="badge" style="background:var(--green)">記</span>今日のふりかえり</h2>
+    <p class="hint">練習してみて気づいたこと・次にやりたいことを書きます（自動で保存されます）。</p>
+    <textarea id="dayNote" placeholder="れい：レイアップの成功が増えた。次はスピードを上げてやってみたい。"></textarea>
+  </div>
+
+  <div class="foot">
+    <button class="btn-print" onclick="window.print()">🖨 印刷する</button>
+    <button class="btn-clear" id="clearBtn">今日のメニューを消す</button>
+  </div>
+
+  <div class="past-sec">
+    <h2>📚 過去のメニュー</h2>
+    <div id="pastList"></div>
+  </div>
+</div>
+
+<div id="timerBar">
+  <span class="tname" id="tName"></span>
+  <span class="tleft" id="tLeft">0:00</span>
+  <button id="tStop">とめる</button>
+</div>
+
+<script>
+/* 球技データ（もくてきは指導要領のねらいを参考にした選択肢）
+   競技を足すときはここに1ブロック追加するだけ */
+const SPORTS = {
+  wcb:{ name:"車いすバスケットボール", icon:"🏀",
+    goals:[
+      {t:"こうげき",items:["空いた場所を見つけて攻める","ゴール前でシュートを決める","パスをつないで速く攻める","ドリブルでボールを運ぶ","チェアで場所を取る","リバウンドを取る"]},
+      {t:"まもり",items:["相手をマークして守る","パスコースをふさぐ","抜かれない位置を取る","チェアで進路をふさぐ"]},
+      {t:"チェアワーク・体力",items:["チェアワークを速くする","ターンを小さく速くする","止まる・出るを速くする","最後まで動ける体力をつける"]},
+      {t:"チーム",items:["作戦を立ててゲームをする","声をかけ合い連携する","役割を分担する"]}],
+    drills:[
+      {t:"チェアワーク",items:["ダブルプッシュ","フロントターン","バックターン","ジグザグ走行","ストップ＆ゴー","8の字ターン","コートおうふく"]},
+      {t:"ドリブル",items:["2プッシュ1ドリブル","ジグザグドリブル","スピードドリブル"]},
+      {t:"パス",items:["対面チェストパス","バウンズパス","オーバーヘッドパス","3メンパス","走りながらパス"]},
+      {t:"シュート",items:["セットシュート","レイアップシュート","ミドルシュート","ゴール下シュート","フリースロー"]},
+      {t:"ゲーム形式",items:["1対1","2対1の速攻","スクリーンプレー","ピック＆ロール","ハーフコート3対3"]}],
+    cares:[
+      {t:"安全",items:["転倒・接触に気をつける","ブレーキ・ベルトを確認する","手や指をタイヤに巻きこまない","後ろに倒れないよう気をつける","まわりの安全をかくにんする"]},
+      {t:"ルール",items:["2プッシュまで（トラベリング）","おしりを浮かせない（リフティング）","ファウルにならない体の使い方"]},
+      {t:"体調",items:["水分補給・休けいをとる","姿勢をまっすぐ保つ","つかれたら無理をしない"]}] },
+
+  basket:{ name:"バスケットボール", icon:"🏀",
+    goals:[
+      {t:"こうげき",items:["空いた場所に走り込んで攻める","ゴール前でシュートを決める","パスをつないで速く攻める","ドリブルで運ぶ","リバウンドを取る"]},
+      {t:"まもり",items:["相手をマークして守る","パスコースをふさぐ","抜かれない足の運びをする"]},
+      {t:"チーム",items:["作戦を立ててゲームをする","声をかけ合い連携する","役割を分担する"]}],
+    drills:[
+      {t:"基礎",items:["ハンドリング","その場ドリブル","動きながらのドリブル","ピボット"]},
+      {t:"パス",items:["チェストパス","バウンズパス","動きながらのパス"]},
+      {t:"シュート",items:["レイアップシュート","セットシュート","ジャンプシュート","フリースロー"]},
+      {t:"ゲーム形式",items:["1対1","2対1の速攻","3対3ゲーム"]}],
+    cares:[
+      {t:"安全",items:["接触・転倒に気をつける","まわりを見て動く","突き指に注意"]},
+      {t:"ルール",items:["トラベリング・ダブルドリブルに注意","ファウルをしない"]},
+      {t:"体調",items:["水分補給・休けい","準備運動をしっかり"]}] },
+
+  soccer:{ name:"サッカー／フットサル", icon:"⚽",
+    goals:[
+      {t:"こうげき",items:["空いた場所へ動いて攻める","シュートを決める","パスをつなぐ","ドリブルで運ぶ"]},
+      {t:"まもり",items:["相手をマークして守る","ボールをうばう","ゴール前を守る"]},
+      {t:"チーム",items:["作戦を立ててゲームをする","声をかけ合い連携する","ポジションの役割を意識する"]}],
+    drills:[
+      {t:"基礎",items:["リフティング","コーンドリブル","トラップ練習"]},
+      {t:"パス・キック",items:["対面パス（インサイド）","ロングキック","センタリング"]},
+      {t:"シュート",items:["シュート練習","走り込んでシュート"]},
+      {t:"ゲーム形式",items:["1対1","2対2","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["接触・転倒に注意","無理な当たりは避ける","まわりを見て動く"]},
+      {t:"ルール",items:["手を使わない","ファウルをしない"]},
+      {t:"体調",items:["水分補給・休けい","シューズ・すねあての確認"]}] },
+
+  handball:{ name:"ハンドボール", icon:"🤾",
+    goals:[
+      {t:"こうげき",items:["空いた場所へ走り込む","シュートを決める","パスをつないで速く攻める"]},
+      {t:"まもり",items:["相手をマークして守る","パスコースをふさぐ"]},
+      {t:"チーム",items:["作戦を立ててゲームをする","声をかけ合い連携する"]}],
+    drills:[
+      {t:"基礎",items:["キャッチボール","ドリブル"]},
+      {t:"パス",items:["対面パス","動きながらのパス","三角パス"]},
+      {t:"シュート",items:["ステップシュート","ジャンプシュート","ねらって打つシュート"]},
+      {t:"ゲーム形式",items:["1対1","速攻の練習","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["接触・転倒に注意","無理な当たりは避ける","まわりを見て動く"]},
+      {t:"ルール",items:["歩数（3歩まで）に注意","ファウルをしない"]},
+      {t:"体調",items:["水分補給・休けい","準備運動をしっかり"]}] },
+
+  volley:{ name:"バレーボール", icon:"🏐",
+    goals:[
+      {t:"つなぐ",items:["レシーブをつなぐ","トスを上げる","ボールの下にすばやく入る"]},
+      {t:"こうげき",items:["サーブを入れる","スパイクを打つ","空いた所をねらう","三段攻撃を組み立てる"]},
+      {t:"チーム",items:["声をかけ合い連携する","役割を分担する"]}],
+    drills:[
+      {t:"基礎",items:["直上パス（オーバー）","直上パス（アンダー）","対人パス","ボールの下に入る練習"]},
+      {t:"サーブ",items:["サーブ練習","ねらった所へのサーブ"]},
+      {t:"こうげき",items:["トス練習","スパイク練習","三段攻撃"]},
+      {t:"ゲーム形式",items:["レシーブ練習","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["指・手首に注意","ぶつからないよう声かけ","無理な飛び込みは避ける"]},
+      {t:"ルール",items:["順番（ローテーション）を守る"]},
+      {t:"体調",items:["水分補給","準備運動をしっかり"]}] },
+
+  tabletennis:{ name:"卓球", icon:"🏓",
+    goals:[
+      {t:"打つ",items:["フォアを打つ","バックを打つ","ラリーを続ける"]},
+      {t:"こうげき・くふう",items:["サーブを安定させる","空いた所へ返す","回転を使う","作戦を考えて打つ"]},
+      {t:"たいど",items:["順番を守り協力する","用具を大切にする"]}],
+    drills:[
+      {t:"基礎",items:["素振り","対面ラリー（フォア）","対面ラリー（バック）"]},
+      {t:"多球練習",items:["多球練習（フォア）","多球練習（バック）","ツッツキ"]},
+      {t:"サーブ",items:["サーブ練習","回転サーブ"]},
+      {t:"動き・ゲーム",items:["左右フットワーク","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["台のまわりに注意","球を拾うとき足元に注意","ラケットを振りすぎない"]},
+      {t:"たいど",items:["順番を守る","用具をていねいに扱う"]},
+      {t:"体調",items:["水分補給"]}] },
+
+  wc_tabletennis:{ name:"車いす卓球", icon:"🏓",
+    goals:[
+      {t:"打つ",items:["ラリーを続ける","フォアを打つ","バックを打つ"]},
+      {t:"車いす操作",items:["車いすを動かして打つ位置に入る","台への寄せ方を身につける"]},
+      {t:"こうげき・くふう",items:["サーブを安定させる","空いた所へ返す","作戦を考えて打つ"]},
+      {t:"たいど",items:["順番を守り協力する"]}],
+    drills:[
+      {t:"基礎",items:["素振り","対面ラリー（フォア）","対面ラリー（バック）"]},
+      {t:"多球練習",items:["多球練習（フォア）","多球練習（バック）"]},
+      {t:"サーブ",items:["サーブ練習"]},
+      {t:"車いす操作",items:["車いす操作＋打球","台への寄せ方の練習"]},
+      {t:"ゲーム形式",items:["ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["台・車いすの位置に注意","ブレーキの固定を確認","ラケットを振りすぎない"]},
+      {t:"たいど",items:["順番を守る","用具をていねいに扱う"]},
+      {t:"体調",items:["水分補給","つかれたら休む"]}] },
+
+  badminton:{ name:"バドミントン", icon:"🏸",
+    goals:[
+      {t:"打つ",items:["ラリーを続ける","クリアを打つ","スマッシュを打つ","ドロップを打つ"]},
+      {t:"こうげき・くふう",items:["サーブを入れる","空いた所をねらう","作戦を考える"]},
+      {t:"たいど",items:["順番を守り協力する"]}],
+    drills:[
+      {t:"基礎",items:["素振り","対面ラリー"]},
+      {t:"ショット",items:["クリア練習","ドロップ練習","スマッシュ練習"]},
+      {t:"サーブ",items:["サーブ練習"]},
+      {t:"動き・ゲーム",items:["フットワーク","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["ラケットの振りに注意","まわりの人に注意"]},
+      {t:"たいど",items:["順番を守る","用具をていねいに扱う"]},
+      {t:"体調",items:["水分補給","準備運動をしっかり"]}] },
+
+  wc_badminton:{ name:"車いすバドミントン", icon:"🏸",
+    goals:[
+      {t:"打つ",items:["ラリーを続ける","クリアを打つ","サーブを入れる"]},
+      {t:"車いす操作",items:["車いすを動かして打つ位置に入る","もどる動きを速くする"]},
+      {t:"くふう",items:["空いた所をねらう","作戦を考える"]},
+      {t:"たいど",items:["順番を守り協力する"]}],
+    drills:[
+      {t:"基礎",items:["素振り","対面ラリー"]},
+      {t:"ショット",items:["クリア練習","ドロップ練習"]},
+      {t:"サーブ",items:["サーブ練習"]},
+      {t:"車いす操作",items:["車いす操作＋打球","コート内の動きの練習"]},
+      {t:"ゲーム形式",items:["ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["ラケットの振りに注意","車いすの位置・接触に注意","ブレーキの固定を確認"]},
+      {t:"たいど",items:["順番を守る","用具をていねいに扱う"]},
+      {t:"体調",items:["水分補給","つかれたら休む"]}] },
+
+  tennis:{ name:"テニス／ソフトテニス", icon:"🎾",
+    goals:[
+      {t:"打つ",items:["ラリーを続ける","フォアを打つ","バックを打つ","ボレーを打つ"]},
+      {t:"くふう",items:["サーブを入れる","空いた所をねらう","作戦を考える"]},
+      {t:"たいど",items:["協力して取り組む"]}],
+    drills:[
+      {t:"基礎",items:["素振り","対面ラリー"]},
+      {t:"ストローク",items:["フォア練習","バック練習","ボレー練習"]},
+      {t:"サーブ",items:["サーブ練習"]},
+      {t:"動き・ゲーム",items:["フットワーク","ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["ラケットの振りに注意","まわりに注意"]},
+      {t:"たいど",items:["順番を守る","用具をていねいに扱う"]},
+      {t:"体調",items:["水分補給・休けい","準備運動をしっかり"]}] },
+
+  softball:{ name:"ソフトボール／野球", icon:"⚾",
+    goals:[
+      {t:"打つ",items:["バットで強く打つ","ねらった方向へ打つ"]},
+      {t:"守る",items:["ボールを捕る","正確に投げる","守りの位置を考える"]},
+      {t:"走る",items:["走塁する","ベースランニングを速くする"]},
+      {t:"チーム",items:["作戦を立ててゲームをする","仲間と連携する"]}],
+    drills:[
+      {t:"打つ",items:["素振り","ティーバッティング","トスバッティング"]},
+      {t:"守る",items:["キャッチボール","ゴロ捕球","フライ捕球","中継プレー"]},
+      {t:"走る",items:["塁間走","ベースランニング"]},
+      {t:"ゲーム形式",items:["ミニゲーム"]}],
+    cares:[
+      {t:"安全",items:["バット・打球に注意","まわりの安全を確認","ボールから目を離さない"]},
+      {t:"たいど",items:["用具をていねいに扱う","順番を守る"]},
+      {t:"体調",items:["水分補給・休けい","準備運動をしっかり"]}] },
+
+  free:{ name:"じぶんで作る（自由）", icon:"✏️",
+    goals:[], drills:[],
+    cares:["転倒・接触に注意","水分補給・休けい","まわりの安全をかくにん","無理をしない","用具をていねいに扱う"] },
+};
+
+/* ===== 日付ごとの保存 =====
+   days = { "2026-07-10": { menu:[...], note:"" }, ... } */
+let days = {};
+let current = "wcb";
+const selGoal=new Set(), selDrill=new Set(), selCare=new Set();
+
+function todayKey(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+const TODAY = todayKey();
+function jpDate(key){
+  const [y,m,d]=key.split("-").map(Number);
+  const w=["日","月","火","水","木","金","土"][new Date(y,m-1,d).getDay()];
+  return `${y}年${m}月${d}日（${w}）`;
+}
+function saveAll(){ try{
+  localStorage.setItem("pmb3_days",JSON.stringify(days));
+  localStorage.setItem("pmb3_sport",current);
+}catch(e){} }
+function loadAll(){ try{
+  const d=localStorage.getItem("pmb3_days"); if(d)days=JSON.parse(d);
+  const s=localStorage.getItem("pmb3_sport"); if(s&&SPORTS[s])current=s;
+}catch(e){} }
+function today(){ if(!days[TODAY]) days[TODAY]={menu:[],note:""}; return days[TODAY]; }
+
+/* ===== 競技選択 ===== */
+function buildSportGrid(){
+  const g=document.getElementById("sportGrid"); g.innerHTML="";
+  Object.entries(SPORTS).forEach(([key,sp])=>{
+    const b=document.createElement("button");
+    b.className="sport"+(key===current?" sel":""); b.type="button";
+    b.innerHTML=`<span class="ico">${sp.icon}</span><span class="nm">${sp.name}</span>`;
+    b.onclick=()=>{ current=key; saveAll(); buildSportGrid(); buildChips(); updateHeader(); };
+    g.appendChild(b);
+  });
+}
+function updateHeader(){
+  const sp=SPORTS[current];
+  document.getElementById("curSport").textContent=`${sp.icon} ${sp.name}`;
+  document.getElementById("todayLbl").textContent="📅 "+jpDate(TODAY);
+}
+
+/* ===== チップ ===== */
+function fillChips(elId,list,selSet,multi){
+  const box=document.getElementById(elId); box.innerHTML=""; selSet.clear();
+  const addChip=(txt)=>{
+    const b=document.createElement("button");
+    b.className="chip"+(multi?" multi":""); b.type="button"; b.textContent=txt;
+    b.onclick=()=>{
+      if(multi){ b.classList.toggle("sel"); selSet.has(txt)?selSet.delete(txt):selSet.add(txt); }
+      else{ box.querySelectorAll(".chip.sel").forEach(c=>c.classList.remove("sel")); selSet.clear(); b.classList.add("sel"); selSet.add(txt); }
+    };
+    box.appendChild(b);
+  };
+  list.forEach(entry=>{
+    if(typeof entry==="string"){ addChip(entry); }
+    else{
+      const h=document.createElement("div"); h.className="chip-group"; h.textContent="▼ "+entry.t;
+      box.appendChild(h);
+      entry.items.forEach(addChip);
+    }
+  });
+}
+function buildChips(){
+  const sp=SPORTS[current];
+  fillChips("chipsGoal",sp.goals,selGoal,false);
+  fillChips("chipsDrill",sp.drills,selDrill,false);
+  fillChips("chipsCare",sp.cares,selCare,true);
+}
+
+/* ===== ステッパー ===== */
+document.querySelectorAll(".stepper button").forEach(btn=>{
+  btn.onclick=()=>{ const inp=document.getElementById(btn.dataset.t);
+    let v=parseInt(inp.value||"0",10)+parseInt(btn.dataset.d,10); if(v<0)v=0; inp.value=v; };
+});
+
+/* ===== 追加 ===== */
+document.getElementById("addBtn").onclick=()=>{
+  const goal=document.getElementById("goalText").value.trim()||[...selGoal][0]||"";
+  const drill=document.getElementById("drillText").value.trim()||[...selDrill][0]||"";
+  const cares=[...selCare]; const ct=document.getElementById("careText").value.trim(); if(ct)cares.push(ct);
+  const reps=+document.getElementById("reps").value||0, sets=+document.getElementById("sets").value||0, mins=+document.getElementById("mins").value||0;
+  if(!drill){ alert("「ないよう」を選ぶか、書いてください。"); return; }
+  if(!goal){ alert("「もくてき」を選ぶか、書いてください。"); return; }
+  today().menu.push({sport:current, goal, drill, reps, sets, mins, cares, status:""});
+  saveAll(); render(); resetForm();
+  document.querySelector(".menu-head").scrollIntoView({behavior:"smooth"});
+};
+function resetForm(){
+  document.querySelectorAll(".builder .chip.sel").forEach(c=>c.classList.remove("sel"));
+  selGoal.clear(); selDrill.clear(); selCare.clear();
+  goalText.value=""; drillText.value=""; careText.value="";
+  reps.value=10; sets.value=3; mins.value=0;
+}
+
+/* ===== 今日のメニュー描画 ===== */
+function render(){
+  const menu=today().menu;
+  const list=document.getElementById("menuList");
+  document.getElementById("menuCount").textContent=menu.length+" こ";
+  const total=menu.reduce((s,it)=>s+(it.mins>0?it.mins:0),0);
+  document.getElementById("menuTime").textContent="合計 "+total+" 分";
+  if(!menu.length){
+    list.innerHTML='<div class="empty">まだ練習がありません。<br>上の1〜4を決めて「メニューに入れる」をおしてください。</div>';
+    document.querySelectorAll(".steps-map .m").forEach(m=>m.classList.remove("done"));
+  }else{
+    list.innerHTML="";
+    menu.forEach((it,i)=>{
+      const a=[]; if(it.reps>0)a.push(it.reps+" 回"); if(it.sets>0)a.push(it.sets+" セット"); if(it.mins>0)a.push(it.mins+" 分");
+      const amount=a.length?a.join(" × "):"―";
+      const tags=it.cares.length?it.cares.map(c=>`<span class="tag">${esc(c)}</span>`).join(""):'<span style="color:#9AA3B1">―</span>';
+      const sp=SPORTS[it.sport]; const spLbl=sp?`${sp.icon} ${sp.name}`:"";
+      const mark=it.status==="good"?'<span class="stmark g">✓ できた</span>':it.status==="hard"?'<span class="stmark h">△ むずかしかった</span>':"";
+      const el=document.createElement("div");
+      el.className="item"+(it.status==="good"?" st-good":it.status==="hard"?" st-hard":"");
+      el.innerHTML=`
+        <div class="top"><span class="seq">${String(i+1).padStart(2,"0")}</span>
+          <span class="content">${esc(it.drill)}</span>${mark}<span class="sportlbl">${esc(spLbl)}</span></div>
+        <dl><dt>もくてき</dt><dd>${esc(it.goal)}</dd>
+        <dt>回数など</dt><dd>${amount}</dd>
+        <dt>気をつける</dt><dd>${tags}</dd></dl>
+        <div class="ctrl">
+          <button class="good${it.status==="good"?" on":""}" data-a="good" data-i="${i}">✓ できた</button>
+          <button class="hard${it.status==="hard"?" on":""}" data-a="hard" data-i="${i}">△ むずかしかった</button>
+          ${it.mins>0?`<button class="tmr" data-a="timer" data-i="${i}">⏱ ${it.mins}分タイマー</button>`:""}
+          <button data-a="up" data-i="${i}">▲</button>
+          <button data-a="down" data-i="${i}">▼</button>
+          <button class="del" data-a="del" data-i="${i}">けす</button>
+        </div>`;
+      list.appendChild(el);
+    });
+    document.querySelectorAll(".steps-map .m").forEach(m=>m.classList.add("done"));
+    list.querySelectorAll("button").forEach(b=>{
+      b.onclick=()=>{
+        const i=+b.dataset.i,a=b.dataset.a,menu=today().menu;
+        if(a==="del"){ if(confirm("この練習を消しますか？"))menu.splice(i,1); }
+        else if(a==="up"&&i>0){ [menu[i-1],menu[i]]=[menu[i],menu[i-1]]; }
+        else if(a==="down"&&i<menu.length-1){ [menu[i+1],menu[i]]=[menu[i],menu[i+1]]; }
+        else if(a==="good"){ menu[i].status=menu[i].status==="good"?"":"good"; }
+        else if(a==="hard"){ menu[i].status=menu[i].status==="hard"?"":"hard"; }
+        else if(a==="timer"){ startTimer(i); return; }
+        saveAll(); render();
+      };
+    });
+  }
+  renderPast();
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ===== ふりかえりメモ（自動保存） ===== */
+const noteEl=document.getElementById("dayNote");
+noteEl.addEventListener("input",()=>{ today().note=noteEl.value; saveAll(); });
+
+/* ===== 過去のメニュー ===== */
+function renderPast(){
+  const box=document.getElementById("pastList");
+  const keys=Object.keys(days).filter(k=>k!==TODAY && days[k].menu.length).sort().reverse();
+  if(!keys.length){ box.innerHTML='<div class="empty">まだ過去のメニューはありません。<br>今日つくったメニューは、明日から自動でここに残ります。</div>'; return; }
+  box.innerHTML="";
+  keys.forEach(k=>{
+    const d=days[k];
+    const done=d.menu.filter(it=>it.status==="good").length;
+    const el=document.createElement("div"); el.className="day";
+    const items=d.menu.map((it,i)=>{
+      const m=it.status==="good"?" ✓":it.status==="hard"?" △":"";
+      const a=[]; if(it.reps>0)a.push(it.reps+"回"); if(it.sets>0)a.push(it.sets+"セット"); if(it.mins>0)a.push(it.mins+"分");
+      return `<div class="pi">${i+1}. ${esc(it.drill)}（${a.join("×")||"―"}）${m}</div>`;
+    }).join("");
+    el.innerHTML=`
+      <div class="dhead">
+        <span class="dt">${jpDate(k)}</span>
+        <span class="dc">${d.menu.length}こ・できた${done}</span>
+        <div class="dbtns">
+          <button data-a="toggle">見る</button>
+          <button data-a="copy">今日にコピー</button>
+          <button class="del" data-a="del">けす</button>
+        </div>
+      </div>
+      <div class="dbody">${items}${d.note?`<div class="note">📝 ${esc(d.note)}</div>`:""}</div>`;
+    el.querySelector('[data-a="toggle"]').onclick=()=>el.classList.toggle("open");
+    el.querySelector('[data-a="copy"]').onclick=()=>{
+      if(!confirm(jpDate(k)+" のメニューを今日に追加しますか？")) return;
+      d.menu.forEach(it=>today().menu.push({...it, cares:[...it.cares], status:""}));
+      saveAll(); render();
+      document.querySelector(".menu-head").scrollIntoView({behavior:"smooth"});
+    };
+    el.querySelector('[data-a="del"]').onclick=()=>{
+      if(confirm(jpDate(k)+" のメニューを消しますか？")){ delete days[k]; saveAll(); renderPast(); }
+    };
+    box.appendChild(el);
+  });
+}
+
+/* ===== タイマー ===== */
+let tInterval=null;
+function fmt(sec){ return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
+function beep(times){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<times;i++){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=880; g.gain.value=.25;
+      o.start(ctx.currentTime+i*.45); o.stop(ctx.currentTime+i*.45+.3);
+    }
+  }catch(e){}
+}
+function startTimer(i){
+  const it=today().menu[i]; if(!it||!(it.mins>0)) return;
+  stopTimer();
+  let remain=it.mins*60;
+  const bar=document.getElementById("timerBar");
+  bar.classList.add("on"); bar.classList.remove("fin");
+  document.getElementById("tName").textContent=it.drill;
+  document.getElementById("tLeft").textContent=fmt(remain);
+  tInterval=setInterval(()=>{
+    remain--;
+    document.getElementById("tLeft").textContent=fmt(Math.max(remain,0));
+    if(remain<=0){
+      clearInterval(tInterval); tInterval=null;
+      bar.classList.add("fin");
+      document.getElementById("tLeft").textContent="おわり！";
+      beep(3);
+    }
+  },1000);
+}
+function stopTimer(){
+  if(tInterval){ clearInterval(tInterval); tInterval=null; }
+  document.getElementById("timerBar").classList.remove("on","fin");
+}
+document.getElementById("tStop").onclick=stopTimer;
+
+/* ===== 全消去（今日のみ） ===== */
+document.getElementById("clearBtn").onclick=()=>{
+  if(today().menu.length&&confirm("今日のメニューをぜんぶ消しますか？（過去の記録は残ります）")){
+    today().menu=[]; saveAll(); render();
+  }
+};
+
+/* ===== 起動 ===== */
+loadAll();
+buildSportGrid(); buildChips(); updateHeader();
+noteEl.value=today().note||"";
+render();
+</script>
+</body>
+</html>
