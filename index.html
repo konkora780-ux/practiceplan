@@ -493,7 +493,11 @@ function fillChips(elId,list,selSet,multi){
     b.className="chip"+(multi?" multi":""); b.type="button"; b.textContent=txt;
     b.onclick=()=>{
       if(multi){ b.classList.toggle("sel"); selSet.has(txt)?selSet.delete(txt):selSet.add(txt); }
-      else{ box.querySelectorAll(".chip.sel").forEach(c=>c.classList.remove("sel")); selSet.clear(); b.classList.add("sel"); selSet.add(txt); }
+      else{
+        const on=selSet.has(txt);   // すでに選ばれていたら、押し直しで解除
+        box.querySelectorAll(".chip.sel").forEach(c=>c.classList.remove("sel")); selSet.clear();
+        if(!on){ b.classList.add("sel"); selSet.add(txt); }
+      }
     };
     box.appendChild(b);
   };
