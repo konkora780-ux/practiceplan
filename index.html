@@ -41,6 +41,19 @@
 
   .wrap{max-width:760px;margin:0 auto;padding:20px 16px 140px;}
 
+  /* ホーム画面に追加していないときだけ出す案内。
+     Safariのまま使うと7日でデータが消えるので、追加をうながす */
+  #a2hs{display:none;position:relative;background:#FFF4EE;border:2px solid var(--orange);
+    border-radius:16px;padding:14px 46px 14px 16px;margin:0 0 20px;}
+  #a2hs.on{display:block;}
+  #a2hs .ttl{margin:0 0 6px;font-family:"Zen Maru Gothic",system-ui,sans-serif;
+    font-weight:900;font-size:1.02rem;color:var(--orange-deep);}
+  #a2hs .txt{margin:0;font-size:.92rem;line-height:1.8;}
+  #a2hs .x{position:absolute;top:8px;right:8px;width:34px;height:34px;border:none;
+    background:transparent;color:var(--orange-deep);font-size:1rem;font-weight:900;
+    cursor:pointer;border-radius:9px;font-family:inherit;}
+  #a2hs .x:active{background:#F7DCCD;}
+
   .sport-sec h2{font-size:1.1rem;font-weight:900;margin:0 0 4px;display:flex;align-items:center;gap:10px;}
   .sport-sec h2 .badge{background:var(--steel);color:#fff;font-family:"Zen Maru Gothic";font-weight:900;
     width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:1rem;}
@@ -168,7 +181,7 @@
   @media print{
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     header::after,.sport-sec,.steps-map,.builder,.foot,.item .ctrl,.menu-count,.menu-time,
-    .past-sec,#timerBar,#noteCard .hint,#submitCard{display:none!important;}
+    .past-sec,#timerBar,#noteCard .hint,#submitCard,#a2hs{display:none!important;}
     body{background:#fff;font-size:12pt;}
     header{background:#fff;color:#000;border-bottom:2px solid #000;padding:0 0 8px;}
     header p,header .pill{color:#333;background:none;padding:0;}
@@ -191,6 +204,14 @@
 </header>
 
 <div class="wrap">
+
+  <div id="a2hs">
+    <button class="x" id="a2hsX" type="button" aria-label="とじる">✕</button>
+    <p class="ttl">⚠️ ホーム画面に追加して使ってください</p>
+    <p class="txt">このまま Safari で使うと、<b>しばらく開かない日がつづいたときに、今までのメニューが消えることがあります</b>。<br>
+      下の<b>共有ボタン</b>（□に↑のしるし）→ <b>「ホーム画面に追加」</b>をおしてください。<br>
+      さいしょに1回やるだけで、あとはアイコンから開けます。</p>
+  </div>
 
   <div class="sport-sec">
     <h2><span class="badge">競</span>まず「きょうぎ」をえらぶ</h2>
@@ -752,6 +773,22 @@ document.getElementById("clearBtn").onclick=()=>{
     today().menu=[]; saveAll(); render();
   }
 };
+
+/* ===== ホーム画面に追加していないときの案内 =====
+   ホーム画面から開いたWebアプリだけが Safari の7日ルールの対象外になる。
+   Safariのまま使っている生徒に気づいてもらわないと、この対策は効かない */
+(function(){
+  const iOS=/iPad|iPhone|iPod/.test(navigator.userAgent)
+    ||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const home=navigator.standalone===true
+    ||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
+  const box=document.getElementById("a2hs");
+  if(iOS&&!home) box.classList.add("on");
+  // とじても保存しない＝次に開くとまた出る。追加してもらうまで気づいてほしいため
+  document.getElementById("a2hsX").onclick=()=>box.classList.remove("on");
+  // 対応ブラウザでは、保存領域を消えにくくするよう申請しておく（失敗しても害はない）
+  try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{}); }catch(e){}
+})();
 
 /* ===== 起動 ===== */
 loadAll();
