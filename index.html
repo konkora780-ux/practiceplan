@@ -108,6 +108,11 @@
   .add-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:14px;padding:16px;
     font-size:1.15rem;font-weight:900;font-family:"Zen Maru Gothic";cursor:pointer;margin-top:4px;}
   .add-btn:active{transform:translateY(1px);}
+  /* なおすモードのときだけ出る「やめる」 */
+  .cancel-btn{display:none;width:100%;background:#fff;color:var(--hard);
+    border:2px solid #F3D3CE;border-radius:14px;padding:13px;margin-top:8px;
+    font-size:1rem;font-weight:900;font-family:"Zen Maru Gothic";cursor:pointer;}
+  .cancel-btn.on{display:block;}
   /* 提出ボタンは「メニューに入れる」と役割が違うので色を分ける */
   #submitBtn{background:var(--steel);margin-top:12px;}
   #submitCard .fld{margin-top:10px;}
@@ -144,6 +149,11 @@
   .item .ctrl .hard{color:var(--hard);border-color:#F3D3CE;}
   .item .ctrl .hard.on{background:var(--hard);color:#fff;border-color:var(--hard);}
   .item .ctrl .tmr{color:var(--navy);border-color:#C4CEDD;}
+  .item .ctrl .edit{color:var(--orange-deep);border-color:#F7D2BC;font-weight:900;}
+  /* いま「なおして」いる練習が、どれか一目で分かるように */
+  .item.editing{border-left-color:var(--orange);background:#FFF9F5;
+    box-shadow:0 0 0 3px rgba(242,103,34,.35);}
+  .item.editing .seq::after{content:" ✏️なおし中";font-size:.78rem;color:var(--orange-deep);}
   .stmark{font-size:.85rem;font-weight:900;margin-left:4px;}
   .stmark.g{color:var(--green);} .stmark.h{color:var(--hard);}
 
@@ -263,6 +273,7 @@
     </div>
 
     <button class="add-btn" id="addBtn">＋ この練習をメニューに入れる</button>
+    <button class="cancel-btn" id="cancelEdit" type="button">やめる（なおすのをキャンセル）</button>
   </div>
 
   <div class="menu-head">
@@ -584,7 +595,12 @@ document.getElementById("addBtn").onclick=()=>{
   const reps=+document.getElementById("reps").value||0, sets=+document.getElementById("sets").value||0, mins=+document.getElementById("mins").value||0;
   if(!drill){ alert("「ないよう」を選ぶか、書いてください。"); return; }
   if(!goal){ alert("「もくてき」を選ぶか、書いてください。"); return; }
-  today().menu.push({sport:current, goal, drill, reps, sets, mins, cares, status:""});
+  const it={sport:current, goal, drill, reps, sets, mins, cares, status:""};
+  if(editIdx!==null&&today().menu[editIdx]){
+    it.status=today().menu[editIdx].status;   // ✓できた等はなおしても残す
+    today().menu[editIdx]=it;
+  }else today().menu.push(it);
+  endEdit();
   saveAll(); render(); resetForm();
   document.querySelector(".menu-head").scrollIntoView({behavior:"smooth"});
 };
@@ -594,6 +610,38 @@ function resetForm(){
   goalText.value=""; drillText.value=""; careText.value="";
   reps.value=10; sets.value=3; mins.value=0;
 }
+
+/* ===== 入れた練習をなおす =====
+   editIdx が null 以外＝その位置の練習を書きかえるモード */
+let editIdx=null;
+// 値がチップにあれば選び、無ければ自由入力へ。元の「自由入力が優先」の作りに合わせる
+function putBack(boxId,selSet,txtId,vals){
+  const box=document.getElementById(boxId), rest=[];
+  const chips={}; box.querySelectorAll(".chip").forEach(c=>chips[c.textContent]=c);
+  vals.forEach(v=>{ if(chips[v]){ chips[v].classList.add("sel"); selSet.add(v); } else rest.push(v); });
+  document.getElementById(txtId).value=rest.join("／");
+}
+function startEdit(i){
+  const it=today().menu[i]; if(!it) return;
+  editIdx=i;
+  if(it.sport&&SPORTS[it.sport]&&it.sport!==current){ current=it.sport; saveAll(); buildSportGrid(); updateHeader(); }
+  buildChips(); resetForm();          // チップを組み直して選択を空にしてから入れ直す
+  putBack("chipsGoal",selGoal,"goalText",[it.goal]);
+  putBack("chipsDrill",selDrill,"drillText",[it.drill]);
+  putBack("chipsCare",selCare,"careText",it.cares||[]);
+  reps.value=it.reps; sets.value=it.sets; mins.value=it.mins;
+  document.getElementById("addBtn").textContent="✓ この練習をなおす";
+  document.getElementById("cancelEdit").classList.add("on");
+  render();                            // なおし中のカードに印をつける
+  document.querySelector(".builder").scrollIntoView({behavior:"smooth"});
+}
+function endEdit(){
+  if(editIdx===null) return;
+  editIdx=null;
+  document.getElementById("addBtn").textContent="＋ この練習をメニューに入れる";
+  document.getElementById("cancelEdit").classList.remove("on");
+}
+document.getElementById("cancelEdit").onclick=()=>{ endEdit(); resetForm(); render(); };
 
 /* ===== 今日のメニュー描画 ===== */
 function render(){
@@ -614,7 +662,7 @@ function render(){
       const sp=SPORTS[it.sport]; const spLbl=sp?`${sp.icon} ${sp.name}`:"";
       const mark=it.status==="good"?'<span class="stmark g">✓ できた</span>':it.status==="hard"?'<span class="stmark h">△ むずかしかった</span>':"";
       const el=document.createElement("div");
-      el.className="item"+(it.status==="good"?" st-good":it.status==="hard"?" st-hard":"");
+      el.className="item"+(it.status==="good"?" st-good":it.status==="hard"?" st-hard":"")+(i===editIdx?" editing":"");
       el.innerHTML=`
         <div class="top"><span class="seq">${String(i+1).padStart(2,"0")}</span>
           <span class="content">${esc(it.drill)}</span>${mark}<span class="sportlbl">${esc(spLbl)}</span></div>
@@ -622,6 +670,7 @@ function render(){
         <dt>回数など</dt><dd>${amount}</dd>
         <dt>気をつける</dt><dd>${tags}</dd></dl>
         <div class="ctrl">
+          <button class="edit" data-a="edit" data-i="${i}">✏️ なおす</button>
           <button class="good${it.status==="good"?" on":""}" data-a="good" data-i="${i}">✓ できた</button>
           <button class="hard${it.status==="hard"?" on":""}" data-a="hard" data-i="${i}">△ むずかしかった</button>
           ${it.mins>0?`<button class="tmr" data-a="timer" data-i="${i}">⏱ ${it.mins}分タイマー</button>`:""}
@@ -635,6 +684,9 @@ function render(){
     list.querySelectorAll("button").forEach(b=>{
       b.onclick=()=>{
         const i=+b.dataset.i,a=b.dataset.a,menu=today().menu;
+        if(a==="edit"){ startEdit(i); return; }
+        // 並べ替え・削除で位置がずれる＝なおす対象を見失うので、いったんやめる
+        if(a==="del"||a==="up"||a==="down"){ endEdit(); resetForm(); }
         if(a==="del"){ if(confirm("この練習を消しますか？"))menu.splice(i,1); }
         else if(a==="up"&&i>0){ [menu[i-1],menu[i]]=[menu[i],menu[i-1]]; }
         else if(a==="down"&&i<menu.length-1){ [menu[i+1],menu[i]]=[menu[i],menu[i+1]]; }
@@ -812,7 +864,7 @@ document.getElementById("submitBtn").onclick=async()=>{
 /* ===== 全消去（今日のみ） ===== */
 document.getElementById("clearBtn").onclick=()=>{
   if(today().menu.length&&confirm("今日のメニューをぜんぶ消しますか？（過去の記録は残ります）")){
-    today().menu=[]; saveAll(); render();
+    today().menu=[]; endEdit(); resetForm(); saveAll(); render();
   }
 };
 
